@@ -1,0 +1,20 @@
+__pycache__/
+*.pyc
+*.pdf
+*.xlsx
+pages/
+~$*
+.env
+
+# Large data files not needed for deployment
+extraction_progress.json
+voters_all.json
+telegram_config.json
+booth_data*.json
+
+# Extraction scripts not needed for web app
+run_phase1.py
+run_phase2.py
+extract_voters.py
+create_microplan.py
+create_final_microplan.py

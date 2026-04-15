@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>રણોલી જિલ્લા પંચાયત 2026 - ગિરિરાજસિંહ ગોહિલ (BJP)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bjp-orange: #FF6B00;
+            --bjp-green: #138808;
+            --bjp-blue: #000080;
+        }
+        body {
+            background: #f5f5f5;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        .navbar {
+            background: linear-gradient(135deg, var(--bjp-orange), #FF8C00) !important;
+        }
+        .navbar-brand { font-weight: bold; font-size: 1.1rem; }
+        .stat-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-card .card-body { padding: 1.2rem; }
+        .stat-number { font-size: 2rem; font-weight: 700; }
+        .stat-label { font-size: 0.85rem; color: #666; }
+        .booth-card {
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+        .booth-card:hover { border-color: var(--bjp-orange); transform: scale(1.02); }
+        .booth-card.active { border-color: var(--bjp-orange); background: #fff8f0; }
+        .area-header {
+            background: var(--bjp-blue);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .search-box {
+            border-radius: 25px;
+            padding: 10px 20px;
+            border: 2px solid #ddd;
+            font-size: 1rem;
+        }
+        .search-box:focus { border-color: var(--bjp-orange); box-shadow: 0 0 0 3px rgba(255,107,0,0.15); }
+        .voter-table { font-size: 0.85rem; }
+        .voter-table th { background: #f8f9fa; position: sticky; top: 0; z-index: 1; }
+        .badge-jaati { font-size: 0.75rem; padding: 4px 8px; border-radius: 12px; }
+        .gender-m { color: #2196F3; }
+        .gender-f { color: #E91E63; }
+        .tab-section { display: none; }
+        .tab-section.active { display: block; }
+        .nav-pills .nav-link.active { background: var(--bjp-orange); }
+        .nav-pills .nav-link { color: #333; }
+        #voterListScroll { max-height: 500px; overflow-y: auto; }
+        .loading { text-align: center; padding: 40px; }
+        .loading .spinner-border { width: 3rem; height: 3rem; color: var(--bjp-orange); }
+        .chart-container { position: relative; height: 250px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark px-3 py-2">
+    <span class="navbar-brand">
+        <i class="bi bi-flag-fill"></i> રણોલી જિલ્લા પંચાયત 2026 — ગિરિરાજસિંહ ગોહિલ (BJP)
+    </span>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-light btn-sm" onclick="exportExcel()">
+            <i class="bi bi-download"></i> Excel Export
+        </button>
+    </div>
+</nav>
+
+<div class="container-fluid px-3 py-3">
+
+    <!-- Navigation Pills -->
+    <ul class="nav nav-pills mb-3" id="mainTabs">
+        <li class="nav-item">
+            <a class="nav-link active" href="#" onclick="showTab('overview', event)">
+                <i class="bi bi-speedometer2"></i> Overview
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showTab('booths', event)">
+                <i class="bi bi-building"></i> Booths
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showTab('search', event)">
+                <i class="bi bi-search"></i> Search
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showTab('jaati', event)">
+                <i class="bi bi-people-fill"></i> Jaati Analysis
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showTab('workers', event)">
+                <i class="bi bi-person-badge"></i> Workers
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showTab('age', event)">
+                <i class="bi bi-graph-up"></i> Age/Gender
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" onclick="showTab('reports', event)">
+                <i class="bi bi-telegram"></i> Reports
+            </a>
+        </li>
+    </ul>
+
+    <!-- ==================== OVERVIEW TAB ==================== -->
+    <div id="tab-overview" class="tab-section active">
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <div class="stat-number text-primary" id="totalVoters">-</div>
+                        <div class="stat-label">Total Voters</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <div class="stat-number text-success" id="winTarget">-</div>
+                        <div class="stat-label">Winning Target (55%)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <div class="stat-number" style="color:var(--bjp-orange)" id="totalBooths">36</div>
+                        <div class="stat-label">Total Booths</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body text-center">
+                        <div class="stat-number text-info">4</div>
+                        <div class="stat-label">Taluka Panchayat Areas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <h6><i class="bi bi-gender-ambiguous"></i> Gender Split</h6>
+                        <div class="chart-container">
+                            <canvas id="genderChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <h6><i class="bi bi-bar-chart"></i> Age Distribution</h6>
+                        <div class="chart-container">
+                            <canvas id="ageChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <h6><i class="bi bi-map"></i> Area-wise Voters</h6>
+                        <div class="chart-container">
+                            <canvas id="areaChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Area summary table -->
+        <div class="card stat-card">
+            <div class="card-body">
+                <h6><i class="bi bi-table"></i> Area-wise Summary</h6>
+                <table class="table table-sm table-hover" id="areaSummaryTable">
+                    <thead><tr><th>Area</th><th>Booths</th><th>Voters</th><th>Male</th><th>Female</th><th>M:F Ratio</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== BOOTHS TAB ==================== -->
+    <div id="tab-booths" class="tab-section">
+        <div class="row">
+            <div class="col-md-4" style="max-height:80vh;overflow-y:auto;">
+                <div id="boothList"></div>
+            </div>
+            <div class="col-md-8">
+                <div id="boothDetail">
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-hand-index" style="font-size:3rem"></i>
+                        <p class="mt-2">Click a booth to see voter details</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SEARCH TAB ==================== -->
+    <div id="tab-search" class="tab-section">
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <input type="text" class="form-control search-box" id="searchInput"
+                           placeholder="Search by EPIC number, name or surname (Gujarati/English)..."
+                           onkeyup="debounceSearch()">
+                    <button class="btn btn-warning" onclick="doSearch()">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="searchResults"></div>
+    </div>
+
+    <!-- ==================== JAATI TAB ==================== -->
+    <div id="tab-jaati" class="tab-section">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <h6><i class="bi bi-pie-chart-fill"></i> Overall Jaati Distribution</h6>
+                        <div style="height:350px">
+                            <canvas id="jaatiChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <h6><i class="bi bi-list-ol"></i> Jaati Counts</h6>
+                        <div id="jaatiTable" style="max-height:350px;overflow-y:auto;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3" id="jaatiByArea"></div>
+    </div>
+
+    <!-- ==================== WORKERS TAB ==================== -->
+    <div id="tab-workers" class="tab-section">
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text">Total Karyakartas</span>
+                    <input type="number" class="form-control" id="workerCount" value="300" min="1" max="1000">
+                    <button class="btn btn-warning" onclick="loadWorkerDistribution()">Calculate</button>
+                </div>
+            </div>
+        </div>
+        <div id="workerDistribution"></div>
+    </div>
+
+    <!-- ==================== AGE/GENDER TAB ==================== -->
+    <div id="tab-age" class="tab-section">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <h6>Age Distribution by Gender</h6>
+                        <div style="height:300px">
+                            <canvas id="ageGenderChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <h6>Area-wise Gender Split</h6>
+                        <div style="height:300px">
+                            <canvas id="areaGenderChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3" id="ageDetailTable"></div>
+    </div>
+
+    <!-- ==================== REPORTS TAB ==================== -->
+    <div id="tab-reports" class="tab-section">
+        <div class="row g-3 mb-3">
+            <div class="col-md-8">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <h6><i class="bi bi-telegram"></i> Live Field Reports</h6>
+                        <button class="btn btn-sm btn-outline-primary mb-2" onclick="loadReports()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                        <div id="reportsFeed" style="max-height:500px;overflow-y:auto;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card mb-3">
+                    <div class="card-body">
+                        <h6><i class="bi bi-gear"></i> Telegram Bot Setup</h6>
+                        <div id="telegramStatus"></div>
+                        <hr>
+                        <div class="mb-2">
+                            <label class="form-label">Bot Token</label>
+                            <input type="password" class="form-control form-control-sm" id="botToken" placeholder="Paste bot token from @BotFather">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Group Chat ID</label>
+                            <input type="text" class="form-control form-control-sm" id="chatId" placeholder="e.g. -1001234567890">
+                        </div>
+                        <button class="btn btn-sm btn-warning" onclick="saveTelegramConfig()">Save Config</button>
+                        <button class="btn btn-sm btn-outline-info" onclick="testTelegram()">Test Connection</button>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <h6>Setup Instructions</h6>
+                        <ol class="small">
+                            <li>Open Telegram, search <code>@BotFather</code></li>
+                            <li>Send <code>/newbot</code>, follow steps</li>
+                            <li>Copy the bot token, paste above</li>
+                            <li>Create a Telegram Group</li>
+                            <li>Add your bot to the group</li>
+                            <li>Make bot an admin</li>
+                            <li>Send a message in group</li>
+                            <li>Get chat ID from API</li>
+                            <li>Karyakartas use <code>/report [booth] [msg]</code></li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ============================================================
+// Tab Management
+// ============================================================
+let currentTab = 'overview';
+let chartInstances = {};
+
+function showTab(tab, evt) {
+    if (evt) { evt.preventDefault(); evt.stopPropagation(); }
+    document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.querySelectorAll('#mainTabs .nav-link').forEach(l => l.classList.remove('active'));
+    const links = document.querySelectorAll('#mainTabs .nav-link');
+    const tabNames = ['overview','booths','search','jaati','workers','age','reports'];
+    const idx = tabNames.indexOf(tab);
+    if (idx >= 0 && links[idx]) links[idx].classList.add('active');
+    currentTab = tab;
+
+    // Load data for tab
+    if (tab === 'overview') loadOverview();
+    else if (tab === 'booths') loadBooths();
+    else if (tab === 'jaati') loadJaati();
+    else if (tab === 'workers') loadWorkerDistribution();
+    else if (tab === 'age') loadAgeGender();
+    else if (tab === 'reports') loadReports();
+    else if (tab === 'search') document.getElementById('searchInput').focus();
+}
+
+// ============================================================
+// Overview
+// ============================================================
+let overviewData = null;
+
+async function loadOverview() {
+    if (overviewData) return;
+    const res = await fetch('/api/overview');
+    overviewData = await res.json();
+    const d = overviewData;
+
+    document.getElementById('totalVoters').textContent = d.total_voters.toLocaleString();
+    document.getElementById('winTarget').textContent = d.winning_target.toLocaleString();
+
+    // Gender chart
+    createChart('genderChart', 'doughnut', {
+        labels: ['Male (પુરુષ)', 'Female (સ્ત્રી)'],
+        datasets: [{
+            data: [d.gender.M || 0, d.gender.F || 0],
+            backgroundColor: ['#2196F3', '#E91E63'],
+        }]
+    });
+
+    // Age chart
+    const ageOrder = ['18-25', '26-35', '36-45', '46-55', '56-65', '65+'];
+    createChart('ageChart', 'bar', {
+        labels: ageOrder,
+        datasets: [{
+            label: 'Voters',
+            data: ageOrder.map(a => d.age_groups[a] || 0),
+            backgroundColor: '#FF6B00',
+            borderRadius: 4,
+        }]
+    }, { scales: { y: { beginAtZero: true } } });
+
+    // Area chart
+    createChart('areaChart', 'doughnut', {
+        labels: d.areas.map(a => a.area),
+        datasets: [{
+            data: d.areas.map(a => a.count),
+            backgroundColor: ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0'],
+        }]
+    });
+
+    // Area table
+    const tbody = document.querySelector('#areaSummaryTable tbody');
+    const boothCounts = {'3-Bajava': 10, '16-Nandesari': 10, '18-Ranoli-1': 8, '19-Ranoli-2': 8};
+    tbody.innerHTML = d.areas.map(a => `
+        <tr>
+            <td><strong>${a.area}</strong></td>
+            <td>${boothCounts[a.area] || '-'}</td>
+            <td>${a.count.toLocaleString()}</td>
+            <td class="gender-m">${a.male.toLocaleString()}</td>
+            <td class="gender-f">${a.female.toLocaleString()}</td>
+            <td>${a.male && a.female ? (a.male/a.female).toFixed(2) : '-'}</td>
+        </tr>
+    `).join('') + `
+        <tr class="table-warning fw-bold">
+            <td>TOTAL</td>
+            <td>36</td>
+            <td>${d.total_voters.toLocaleString()}</td>
+            <td class="gender-m">${(d.gender.M||0).toLocaleString()}</td>
+            <td class="gender-f">${(d.gender.F||0).toLocaleString()}</td>
+            <td>${d.gender.M && d.gender.F ? (d.gender.M/d.gender.F).toFixed(2) : '-'}</td>
+        </tr>
+    `;
+}
+
+// ============================================================
+// Booths
+// ============================================================
+let boothsData = null;
+
+async function loadBooths() {
+    if (boothsData) return;
+    const res = await fetch('/api/booths');
+    boothsData = await res.json();
+
+    const container = document.getElementById('boothList');
+    let html = '';
+    let currentArea = '';
+
+    for (const b of boothsData) {
+        if (b.area !== currentArea) {
+            currentArea = b.area;
+            html += `<div class="area-header mt-2 mb-2">${b.area}</div>`;
+        }
+        html += `
+            <div class="card booth-card mb-2" id="booth-${b.area}-${b.bhag_no}"
+                 onclick="loadBoothDetail('${b.area}', ${b.bhag_no})">
+                <div class="card-body py-2 px-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Booth ${b.bhag_no}</strong>
+                            <small class="d-block text-muted">${b.location_english || b.location_gujarati || ''}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-primary">${b.total}</span>
+                            <small class="d-block">
+                                <span class="gender-m">${b.male}M</span>
+                                <span class="gender-f">${b.female}F</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+}
+
+async function loadBoothDetail(area, bhag) {
+    // Highlight active booth
+    document.querySelectorAll('.booth-card').forEach(c => c.classList.remove('active'));
+    const card = document.getElementById(`booth-${area}-${bhag}`);
+    if (card) card.classList.add('active');
+
+    const detail = document.getElementById('boothDetail');
+    detail.innerHTML = '<div class="loading"><div class="spinner-border"></div><p>Loading...</p></div>';
+
+    const res = await fetch(`/api/booth/${encodeURIComponent(area)}/${bhag}`);
+    const d = await res.json();
+
+    let jaatiHtml = d.jaati_breakdown.map(j =>
+        `<span class="badge badge-jaati me-1 mb-1" style="background:${j.color};color:#fff">
+            ${j.english} (${j.count})
+        </span>`
+    ).join('');
+
+    let voterRows = d.voters.map(v => `
+        <tr>
+            <td>${v.serial_no}</td>
+            <td><code>${v.epic}</code></td>
+            <td>${v.name}</td>
+            <td>${v.surname}</td>
+            <td><small>${v.relation_type === 'father' ? 'F' : 'H'}: ${v.relation_name}</small></td>
+            <td>${v.house_no}</td>
+            <td>${v.age}</td>
+            <td class="${v.gender === 'M' ? 'gender-m' : 'gender-f'}">${v.gender === 'M' ? 'પુ' : 'સ્ત્રી'}</td>
+            <td><span class="badge badge-jaati" style="background:${getJaatiColor(v.jaati_english)}">${v.jaati_english}</span></td>
+        </tr>
+    `).join('');
+
+    detail.innerHTML = `
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5>${area} — Booth ${bhag}</h5>
+                        <p class="text-muted mb-1">
+                            <i class="bi bi-geo-alt"></i>
+                            ${d.location.gujarati || ''}
+                            ${d.location.english ? '(' + d.location.english + ')' : ''}
+                        </p>
+                        <p class="text-muted mb-0"><small>Village: ${d.location.village || ''}</small></p>
+                    </div>
+                    <div class="text-end">
+                        <div class="stat-number">${d.total}</div>
+                        <small class="gender-m">${d.male} Male</small> |
+                        <small class="gender-f">${d.female} Female</small>
+                    </div>
+                </div>
+                <div class="mb-3">${jaatiHtml}</div>
+                <div id="voterListScroll">
+                    <table class="table table-sm table-striped voter-table">
+                        <thead>
+                            <tr><th>#</th><th>EPIC</th><th>Name</th><th>Surname</th><th>Relation</th><th>House</th><th>Age</th><th>G</th><th>Jaati</th></tr>
+                        </thead>
+                        <tbody>${voterRows}</tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// ============================================================
+// Search
+// ============================================================
+let searchTimeout;
+
+function debounceSearch() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(doSearch, 400);
+}
+
+async function doSearch() {
+    const q = document.getElementById('searchInput').value.trim();
+    if (q.length < 2) {
+        document.getElementById('searchResults').innerHTML = '';
+        return;
+    }
+
+    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+
+    if (data.length === 0) {
+        document.getElementById('searchResults').innerHTML =
+            '<div class="alert alert-info">No voters found matching your search.</div>';
+        return;
+    }
+
+    let html = `<p class="text-muted">${data.length} results found</p>`;
+    html += `<table class="table table-sm table-striped voter-table">
+        <thead><tr><th>EPIC</th><th>Name</th><th>Surname</th><th>Booth</th><th>Age</th><th>G</th><th>Jaati</th><th>Relation</th></tr></thead>
+        <tbody>`;
+
+    for (const v of data) {
+        html += `<tr>
+            <td><code>${v.epic}</code></td>
+            <td>${v.name}</td>
+            <td>${v.surname}</td>
+            <td><a href="#" onclick="showTab('booths');setTimeout(()=>loadBoothDetail('${v.area}',${v.bhag_no}),300);return false;">${v.area} B${v.bhag_no}</a></td>
+            <td>${v.age}</td>
+            <td class="${v.gender === 'M' ? 'gender-m' : 'gender-f'}">${v.gender}</td>
+            <td><span class="badge badge-jaati" style="background:${getJaatiColor(v.jaati_english)}">${v.jaati_english}</span></td>
+            <td><small>${v.relation_type === 'father' ? 'F' : 'H'}: ${v.relation_name}</small></td>
+        </tr>`;
+    }
+    html += '</tbody></table>';
+    document.getElementById('searchResults').innerHTML = html;
+}
+
+// ============================================================
+// Jaati Analysis
+// ============================================================
+async function loadJaati() {
+    const res = await fetch('/api/jaati_summary');
+    const d = await res.json();
+
+    // Pie chart
+    const top = d.overall.slice(0, 15);
+    createChart('jaatiChart', 'pie', {
+        labels: top.map(j => j.english),
+        datasets: [{
+            data: top.map(j => j.count),
+            backgroundColor: top.map(j => j.color),
+        }]
+    }, { plugins: { legend: { position: 'right', labels: { font: { size: 11 } } } } });
+
+    // Table
+    let tableHtml = '<table class="table table-sm"><thead><tr><th>Jaati</th><th>Count</th><th>%</th></tr></thead><tbody>';
+    const total = d.overall.reduce((s, j) => s + j.count, 0);
+    for (const j of d.overall) {
+        const pct = (j.count / total * 100).toFixed(1);
+        tableHtml += `<tr>
+            <td><span class="badge badge-jaati me-1" style="background:${j.color}"> </span>${j.english}</td>
+            <td>${j.count.toLocaleString()}</td>
+            <td>${pct}%</td>
+        </tr>`;
+    }
+    tableHtml += '</tbody></table>';
+    document.getElementById('jaatiTable').innerHTML = tableHtml;
+
+    // By area
+    let areaHtml = '<div class="row g-3">';
+    for (const [area, jaatis] of Object.entries(d.by_area)) {
+        const areaTotal = jaatis.reduce((s, j) => s + j.count, 0);
+        areaHtml += `<div class="col-md-6"><div class="card stat-card"><div class="card-body">
+            <h6>${area}</h6>
+            <table class="table table-sm table-striped"><thead><tr><th>Jaati</th><th>Count</th><th>%</th></tr></thead><tbody>`;
+        for (const j of jaatis.slice(0, 10)) {
+            areaHtml += `<tr><td><span class="badge badge-jaati" style="background:${j.color}"> </span> ${j.english}</td>
+                <td>${j.count}</td><td>${(j.count/areaTotal*100).toFixed(1)}%</td></tr>`;
+        }
+        areaHtml += '</tbody></table></div></div></div>';
+    }
+    areaHtml += '</div>';
+    document.getElementById('jaatiByArea').innerHTML = areaHtml;
+}
+
+// ============================================================
+// Worker Distribution
+// ============================================================
+async function loadWorkerDistribution() {
+    const workers = document.getElementById('workerCount').value || 300;
+    const res = await fetch(`/api/worker_distribution?workers=${workers}`);
+    const d = await res.json();
+
+    let html = `<div class="alert alert-info">
+        <strong>${d.total_workers} Karyakartas</strong> distributed across 36 booths
+        (average ${Math.round(25953/d.total_workers)} voters per worker)
+    </div>`;
+
+    html += `<table class="table table-sm table-hover">
+        <thead><tr><th>Area</th><th>Booth</th><th>Location</th><th>Voters</th>
+        <th>Workers</th><th>Per Worker</th><th>Top Jaatis (for matching)</th></tr></thead><tbody>`;
+
+    for (const b of d.distribution) {
+        const jaatiTags = b.top_jaatis.slice(0, 3).map(j =>
+            `<span class="badge bg-secondary me-1">${j.english} (${j.count})</span>`
+        ).join('');
+        html += `<tr>
+            <td>${b.area}</td>
+            <td><strong>${b.bhag_no}</strong></td>
+            <td><small>${b.location}</small></td>
+            <td>${b.total_voters}</td>
+            <td><strong>${b.workers_assigned}</strong></td>
+            <td>${b.voters_per_worker}</td>
+            <td>${jaatiTags}</td>
+        </tr>`;
+    }
+    html += '</tbody></table>';
+    document.getElementById('workerDistribution').innerHTML = html;
+}
+
+// ============================================================
+// Age/Gender Analysis
+// ============================================================
+async function loadAgeGender() {
+    const res = await fetch('/api/age_breakdown');
+    const data = await res.json();
+
+    // Aggregate by gender
+    const ageGroups = ['18-25', '26-35', '36-45', '46-55', '56-65', '65+'];
+    const maleData = [0,0,0,0,0,0];
+    const femaleData = [0,0,0,0,0,0];
+
+    for (const d of data) {
+        const vals = [d.g18_25, d.g26_35, d.g36_45, d.g46_55, d.g56_65, d.g65plus];
+        if (d.gender === 'M') vals.forEach((v, i) => maleData[i] += v);
+        else if (d.gender === 'F') vals.forEach((v, i) => femaleData[i] += v);
+    }
+
+    createChart('ageGenderChart', 'bar', {
+        labels: ageGroups,
+        datasets: [
+            { label: 'Male', data: maleData, backgroundColor: '#2196F3', borderRadius: 4 },
+            { label: 'Female', data: femaleData, backgroundColor: '#E91E63', borderRadius: 4 },
+        ]
+    }, { scales: { y: { beginAtZero: true } }, plugins: { legend: { position: 'top' } } });
+
+    // Area-wise gender
+    const areaGender = {};
+    for (const d of data) {
+        if (!areaGender[d.area]) areaGender[d.area] = { M: 0, F: 0 };
+        const total = d.g18_25 + d.g26_35 + d.g36_45 + d.g46_55 + d.g56_65 + d.g65plus;
+        if (d.gender === 'M') areaGender[d.area].M += total;
+        else if (d.gender === 'F') areaGender[d.area].F += total;
+    }
+
+    const areas = Object.keys(areaGender).sort();
+    createChart('areaGenderChart', 'bar', {
+        labels: areas,
+        datasets: [
+            { label: 'Male', data: areas.map(a => areaGender[a].M), backgroundColor: '#2196F3' },
+            { label: 'Female', data: areas.map(a => areaGender[a].F), backgroundColor: '#E91E63' },
+        ]
+    }, {
+        indexAxis: 'y',
+        scales: { x: { beginAtZero: true, stacked: true }, y: { stacked: true } },
+        plugins: { legend: { position: 'top' } }
+    });
+
+    // Detailed table
+    let tableHtml = `<div class="card stat-card"><div class="card-body">
+        <h6>Booth-wise Age & Gender Breakdown</h6>
+        <table class="table table-sm table-striped">
+        <thead><tr><th>Area</th><th>Booth</th><th>Gender</th>
+        <th>18-25</th><th>26-35</th><th>36-45</th><th>46-55</th><th>56-65</th><th>65+</th><th>Total</th></tr></thead><tbody>`;
+
+    for (const d of data) {
+        const total = d.g18_25 + d.g26_35 + d.g36_45 + d.g46_55 + d.g56_65 + d.g65plus;
+        tableHtml += `<tr>
+            <td>${d.area}</td><td>${d.bhag_no}</td>
+            <td class="${d.gender === 'M' ? 'gender-m' : 'gender-f'}">${d.gender}</td>
+            <td>${d.g18_25}</td><td>${d.g26_35}</td><td>${d.g36_45}</td>
+            <td>${d.g46_55}</td><td>${d.g56_65}</td><td>${d.g65plus}</td>
+            <td><strong>${total}</strong></td>
+        </tr>`;
+    }
+    tableHtml += '</tbody></table></div></div>';
+    document.getElementById('ageDetailTable').innerHTML = tableHtml;
+}
+
+// ============================================================
+// Helpers
+// ============================================================
+function createChart(canvasId, type, data, options = {}) {
+    if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    chartInstances[canvasId] = new Chart(ctx, {
+        type,
+        data,
+        options: { responsive: true, maintainAspectRatio: false, ...options }
+    });
+}
+
+const jaatiColors = {
+    'Patel (Patidar)': '#4CAF50', 'Rajput (Kshatriya)': '#2196F3',
+    'Brahmin': '#FF9800', 'Prajapati (OBC)': '#9C27B0',
+    'Vankar (SC)': '#F44336', 'Adivasi (ST)': '#8BC34A',
+    'Muslim': '#009688', 'Other': '#9E9E9E',
+};
+
+function getJaatiColor(english) {
+    return jaatiColors[english] || '#9E9E9E';
+}
+
+function exportExcel() {
+    window.location.href = '/api/export_excel';
+}
+
+// ============================================================
+// Reports / Telegram
+// ============================================================
+async function loadReports() {
+    const res = await fetch('/api/reports?limit=100');
+    const reports = await res.json();
+
+    const feed = document.getElementById('reportsFeed');
+    if (reports.length === 0) {
+        feed.innerHTML = '<p class="text-muted">No reports yet. Set up Telegram bot and karyakartas can start reporting!</p>';
+        return;
+    }
+
+    let html = '';
+    for (const r of reports) {
+        const time = new Date(r.timestamp).toLocaleString('en-IN');
+        const type = r.report_type === 'chat' ? '💬' : '📝';
+        html += `<div class="border-bottom py-2">
+            <div class="d-flex justify-content-between">
+                <strong>${type} ${r.telegram_name || 'Unknown'}</strong>
+                <small class="text-muted">${time}</small>
+            </div>
+            <div>${r.message}</div>
+            ${r.booth_no ? `<small class="badge bg-info">Booth ${r.booth_no}</small>` : ''}
+        </div>`;
+    }
+    feed.innerHTML = html;
+
+    // Load telegram status
+    loadTelegramStatus();
+}
+
+async function loadTelegramStatus() {
+    try {
+        const res = await fetch('/api/telegram/config');
+        const config = await res.json();
+        const status = document.getElementById('telegramStatus');
+        if (config.enabled && config.has_token) {
+            status.innerHTML = '<span class="badge bg-success">Bot Active</span>';
+        } else if (config.has_token) {
+            status.innerHTML = '<span class="badge bg-warning">Token Set (not enabled)</span>';
+        } else {
+            status.innerHTML = '<span class="badge bg-secondary">Not Configured</span>';
+        }
+    } catch(e) {}
+}
+
+async function saveTelegramConfig() {
+    const token = document.getElementById('botToken').value;
+    const chatId = document.getElementById('chatId').value;
+    await fetch('/api/telegram/config', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({bot_token: token, chat_id: chatId, enabled: true})
+    });
+    alert('Config saved! Restart the server to activate the bot.');
+    loadTelegramStatus();
+}
+
+async function testTelegram() {
+    const res = await fetch('/api/telegram/test', {method: 'POST'});
+    const data = await res.json();
+    if (data.status === 'connected') {
+        alert(`Connected! Bot: @${data.bot_username} (${data.bot_name})`);
+    } else {
+        alert(`Error: ${data.error}`);
+    }
+}
+
+// Also update tab names array
+const origShowTab = showTab;
+
+// Auto-load overview on page load
+loadOverview();
+</script>
+
+</body>
+</html>
