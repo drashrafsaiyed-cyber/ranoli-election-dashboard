@@ -1,7 +1,7 @@
 """
 Election Dashboard - Ranoli Jilla Panchayat 2026
 ================================================
-Web application for Girirajsingh Gohil's BJP campaign.
+Web application for Girirajsinh Waghela's BJP campaign.
 
 Features:
 - Voter search by EPIC, name, surname
